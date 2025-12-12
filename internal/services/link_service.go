@@ -13,7 +13,7 @@ type LinkService struct {
 
 type ILinkService interface {
 	Save(ctx context.Context, userID int, url string, tags []string) error
-	Edit(ctx context.Context, userID int, oldURL, newURL string, tags []string) error // will be done soon
+	Edit(ctx context.Context, userID int, oldURL, newURL string, tags []string) error
 	GetByTag(ctx context.Context, userID int, tag string) ([]models.Link, error)
 	Remove(ctx context.Context, userID int, url string) error
 	List(ctx context.Context, userID int) ([]models.Link, error)
@@ -30,10 +30,10 @@ func (s *LinkService) Save(ctx context.Context, userID int, url string, tags []s
 	}
 
 	newLink := models.Link{
-		Author_ID: userID,
-		URL:       url,
-		Tags:      tags,
-		Created:   time.Now().Unix(),
+		AuthorId: userID,
+		URL:      url,
+		Tags:     tags,
+		Created:  time.Now().Unix(),
 	}
 
 	return s.repo.CreateLink(ctx, &newLink)
@@ -67,7 +67,7 @@ func (s *LinkService) Edit(ctx context.Context, userID int, oldURL, newURL strin
 		return ErrNothingToUpdate
 	}
 
-	return s.repo.EditLink(ctx,userID, oldURL, newURLPtr, newTagsPtr)
+	return s.repo.EditLink(ctx, userID, oldURL, newURLPtr, newTagsPtr)
 }
 
 func (s *LinkService) GetByTag(ctx context.Context, userID int, tag string) ([]models.Link, error) {
