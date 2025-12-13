@@ -12,15 +12,6 @@ import (
 	"gopkg.in/telebot.v4"
 )
 
-/// /save url <tags>
-///росмотр ссылок
-//o	/list — показать все ссылки пользователя с тегами
-//o	/list <тег> — показать ссылки по конкретному тегу
-//o	/get — получить случайную ссылку
-//4.	Редактирование / удаление ссылок
-//o	/delete <url> — удалить ссылку
-//o	/edit <ID> <новый URL> <новые теги> — редактировать ссылку
-
 type Handlers struct {
 	bot     telebot.Bot
 	service services.ILinkService
