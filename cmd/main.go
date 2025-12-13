@@ -9,17 +9,17 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 	"gopkg.in/telebot.v4"
 )
 
 func main() {
-	err := godotenv.Load("config/.env")
+	/*err := godotenv.Load("config/.env")
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
+	*/
 	botToken := os.Getenv("BOT_TOKEN")
 	mongoURI := os.Getenv("MONGO_URI")
 
