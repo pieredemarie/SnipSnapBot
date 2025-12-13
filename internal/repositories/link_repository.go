@@ -90,12 +90,12 @@ func (m *MongoLinkRepo) EditLink(ctx context.Context, userID int, oldURL string,
 		"url":       oldURL,
 	}
 
-	update := bson.M{}
+	update := bson.M{"$set": bson.M{}}
 	if newURL != nil {
-		update["url"] = *newURL
+		update["$set"].(bson.M)["url"] = *newURL
 	}
-	if tags != nil {
-		update["tags"] = *tags
+	if tags != nil && len(*tags) > 0 {
+		update["$set"].(bson.M)["tags"] = *tags
 	}
 
 	_, err := m.collection.UpdateOne(ctx, filter, update)

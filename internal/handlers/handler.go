@@ -26,6 +26,13 @@ type Handlers struct {
 	service services.ILinkService
 }
 
+func NewHandlers(botTg telebot.Bot, service services.ILinkService) *Handlers {
+	return &Handlers{
+		bot:     botTg,
+		service: service,
+	}
+}
+
 func (h *Handlers) SaveHandler(c telebot.Context) error {
 	userID := int(c.Sender().ID)
 	msg := c.Message().Text
@@ -63,10 +70,12 @@ func (h *Handlers) ListHandler(c telebot.Context) error {
 		links, err := h.service.List(ctx, userID)
 		if err != nil {
 			log.Printf("list error: %v", err)
-			return c.Reply("Ошибка при загрузке!")
-		}
-		if len(links) == 0 {
-			return c.Reply("Ссылок нет :(")
+			switch err {
+			case services.ErrNoLinks:
+				return c.Reply("Ссылок нет 😔")
+			default:
+				return c.Reply("Произошла ошибка при загрузке ссылок")
+			}
 		}
 
 		return c.Reply(h.formatLinks(links))
@@ -121,15 +130,17 @@ func (h *Handlers) GetHandler(c telebot.Context) error {
 		link, err := h.service.GetRandom(ctx, userID)
 		if err != nil {
 			log.Printf("get random error: %v", err)
-			return c.Reply("Ошибка при загрузке!")
-		}
-		if link == nil {
-			return c.Reply("ссылок нет :(")
+			switch err {
+			case services.ErrNoLinks:
+				return c.Reply("Ссылок нет 😔")
+			default:
+				return c.Reply("Произошла ошибка при получении ссылки")
+			}
 		}
 
 		return c.Reply(h.formatLink(*link))
 	}
-	return c.Reply("Неверный формат команды.\nПравильно:\n/get\n/")
+	return c.Reply("Неверный формат команды.\nПравильно:\n/get\n")
 }
 
 func (h *Handlers) EditHandler(c telebot.Context) error {
@@ -149,10 +160,28 @@ func (h *Handlers) EditHandler(c telebot.Context) error {
 
 	if err := h.service.Edit(ctx, userID, oldURL, args); err != nil {
 		log.Printf("edit error: %v", err)
-		return c.Reply("Ошибка при редактировании")
+		switch err {
+		case services.ErrNothingToEdit:
+			return c.Reply("Нет данных для изменения 😐")
+		default:
+			return c.Reply("Произошла ошибка при редактировании ссылки")
+		}
 	}
 
 	return c.Reply("Ссылка обновлена ✅")
+}
+
+func (h *Handlers) HandleUnkownCommand(c telebot.Context) error {
+	msg := c.Message().Text
+
+	knownCommands := []string{"/save", "/list", "/get", "/remove", "/edit"}
+	for _, cmd := range knownCommands {
+		if strings.HasPrefix(msg, cmd) {
+			return nil
+		}
+	}
+
+	return c.Reply("Неизвестная команда 😐\n")
 }
 
 func (h *Handlers) parseMsg(msg string) []string {

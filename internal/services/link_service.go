@@ -20,6 +20,10 @@ type ILinkService interface {
 	GetRandom(ctx context.Context, userID int) (*models.Link, error)
 }
 
+func NewLinkService(repo repositories.LinkRepository) ILinkService {
+	return &LinkService{repo: repo}
+}
+
 func (s *LinkService) Save(ctx context.Context, userID int, url string, tags []string) error {
 	if !s.isValidURL(url) {
 		return ErrInvalidURL
