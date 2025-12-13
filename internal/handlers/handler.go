@@ -65,7 +65,7 @@ func (h *Handlers) ListHandler(c telebot.Context) error {
 			log.Printf("list error: %v", err)
 			return c.Reply("Ошибка при загрузке!")
 		}
-		if links == nil {
+		if len(links) == 0 {
 			return c.Reply("Ссылок нет :(")
 		}
 
@@ -105,7 +105,7 @@ func (h *Handlers) RemoveHandler(c telebot.Context) error {
 		c.Reply("Ошибка при удалении.")
 	}
 
-	return c.Reply("Ссылка удалена!")
+	return c.Reply("Ссылка удалена! ✅")
 }
 
 func (h *Handlers) GetHandler(c telebot.Context) error {
@@ -127,9 +127,32 @@ func (h *Handlers) GetHandler(c telebot.Context) error {
 			return c.Reply("ссылок нет :(")
 		}
 
-		c.Reply(h.formatLink(*link))
+		return c.Reply(h.formatLink(*link))
 	}
 	return c.Reply("Неверный формат команды.\nПравильно:\n/get\n/")
+}
+
+func (h *Handlers) EditHandler(c telebot.Context) error {
+	userID := int(c.Sender().ID)
+	msg := c.Message().Text
+
+	parts := h.parseMsg(msg)
+	if len(parts) < 3 {
+		return c.Reply("Использование:\n/edit <oldURL> <newURL|tags>")
+	}
+
+	oldURL := parts[1]
+	args := parts[2:]
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := h.service.Edit(ctx, userID, oldURL, args); err != nil {
+		log.Printf("edit error: %v", err)
+		return c.Reply("Ошибка при редактировании")
+	}
+
+	return c.Reply("Ссылка обновлена ✅")
 }
 
 func (h *Handlers) parseMsg(msg string) []string {
@@ -139,7 +162,7 @@ func (h *Handlers) parseMsg(msg string) []string {
 func (h *Handlers) formatLink(link models.Link) string {
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf(
-		"URL: %sТеги: %s\n",
+		"URL: \n%sТеги: %s\n",
 		link.URL,
 		strings.Join(link.Tags, ","),
 	))

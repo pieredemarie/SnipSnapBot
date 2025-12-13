@@ -13,7 +13,7 @@ type LinkService struct {
 
 type ILinkService interface {
 	Save(ctx context.Context, userID int, url string, tags []string) error
-	Edit(ctx context.Context, userID int, oldURL, newURL string, tags []string) error
+	Edit(ctx context.Context, userID int, oldURL string, args []string) error
 	GetByTag(ctx context.Context, userID int, tag string) ([]models.Link, error)
 	Remove(ctx context.Context, userID int, url string) error
 	List(ctx context.Context, userID int) ([]models.Link, error)
@@ -51,23 +51,31 @@ func (s *LinkService) Remove(ctx context.Context, userID int, url string) error 
 	return s.repo.DeleteLink(ctx, userID, url)
 }
 
-func (s *LinkService) Edit(ctx context.Context, userID int, oldURL, newURL string, tags []string) error {
-	var newURLPtr *string
-	var newTagsPtr *[]string
-
-	if newURL != "" && newURL != oldURL {
-		newURLPtr = &newURL
+func (s *LinkService) Edit(ctx context.Context, userID int, oldURL string, args []string) error {
+	if len(args) == 0 {
+		return ErrNothingToEdit
 	}
 
-	if len(tags) > 0 {
-		newTagsPtr = &tags
+	var (
+		newURL  *string
+		newTags []string
+	)
+
+	// первый аргумент может быть URL
+	first := args[0]
+
+	if s.isValidURL(first) {
+		newURL = &first
+		newTags = args[1:]
+	} else {
+		newTags = args
 	}
 
-	if newURLPtr == nil && newTagsPtr == nil {
-		return ErrNothingToUpdate
+	if newURL == nil && len(newTags) == 0 {
+		return ErrNothingToEdit
 	}
 
-	return s.repo.EditLink(ctx, userID, oldURL, newURLPtr, newTagsPtr)
+	return s.repo.EditLink(ctx, userID, oldURL, newURL, &newTags)
 }
 
 func (s *LinkService) GetByTag(ctx context.Context, userID int, tag string) ([]models.Link, error) {
